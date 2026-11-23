@@ -91,7 +91,9 @@ export function renderPlayers(
 ): void {
   const { myId, map, tileSize, renderPlayers: playersMap } = gameData;
   const rows = map.length;
+  if (rows === 0) return;
   const cols = map[0].length;
+
   const walkCycle = [1, 0, 2, 0];
 
   const me = myId ? playersMap[myId] : null;

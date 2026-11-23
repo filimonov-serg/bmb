@@ -63,8 +63,8 @@ export function updatePowerups(
       const p = players[id];
       if (!p.alive) continue;
 
-      const pc = Math.floor(p.x / TILE_SIZE);
-      const pr = Math.floor(p.y / TILE_SIZE);
+      const pc = wrap(Math.floor(p.x / TILE_SIZE), MAP_COLS);
+      const pr = wrap(Math.floor(p.y / TILE_SIZE), MAP_ROWS);
 
       if (pc === pw.c && pr === pw.r) {
         if (applyPowerup(p, pw.type)) {
@@ -161,8 +161,8 @@ export function dropPlayerPowerups(
 
   if (loot.length === 0) return;
 
-  const startC = Math.floor(player.x / TILE_SIZE);
-  const startR = Math.floor(player.y / TILE_SIZE);
+  const startC = wrap(Math.floor(player.x / TILE_SIZE), MAP_COLS);
+  const startR = wrap(Math.floor(player.y / TILE_SIZE), MAP_ROWS);
   const visited = new Set<string>([`${startC},${startR}`]);
   const queue: { c: number; r: number }[] = [{ c: startC, r: startR }];
   const freeTiles: { c: number; r: number }[] = [];

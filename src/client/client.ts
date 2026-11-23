@@ -94,7 +94,6 @@ function updateInterpolation(dt: number, worldW: number, worldH: number): void {
         } else {
           rp.facing = dy > 0 ? "down" : "up";
         }
-        rp.walkTime += dt * 11;
       } else {
         rp.walkTime = 0;
       }

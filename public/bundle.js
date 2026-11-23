@@ -564,8 +564,8 @@
           const topCell = map[wrap(r - 1, rows)][wrappedC];
           const leftCell = map[wrappedR][wrap(c - 1, cols)];
           const topLeftCell = map[wrap(r - 1, rows)][wrap(c - 1, cols)];
-          const topShadow = topCell === 1 ? 10 : topCell === 2 ? 7 : 0;
-          const leftShadow = leftCell === 1 ? 10 : leftCell === 2 ? 7 : 0;
+          const topShadow = topCell === 1 ? 10 : topCell === 2 || topCell === 4 ? 7 : 0;
+          const leftShadow = leftCell === 1 ? 10 : leftCell === 2 || leftCell === 4 ? 7 : 0;
           ctx2.fillStyle = "rgba(0, 0, 0, 0.32)";
           if (topShadow > 0) {
             ctx2.fillRect(x, y, tileSize, topShadow);
@@ -746,7 +746,6 @@
 
   // src/client/network.ts
   function setupNetwork(socket2, gameData2) {
-    let prevExplosionsCount = 0;
     let prevStats = null;
     socket2.on("init", (data) => {
       gameData2.myId = data.id;
@@ -757,7 +756,6 @@
     socket2.on("roundStart", ({ map, template }) => {
       gameData2.map = map;
       gameData2.template = template;
-      prevExplosionsCount = 0;
       particles.clear();
       clearScorchMarks();
       floatingText.clear();
@@ -767,7 +765,7 @@
       if (gameData2.map[r]) {
         const oldVal = gameData2.map[r][c];
         gameData2.map[r][c] = val;
-        if (oldVal === 2 && val === 0) {
+        if ((oldVal === 2 || oldVal === 4) && val === 0) {
           const wx = c * gameData2.tileSize + gameData2.tileSize / 2;
           const wy = r * gameData2.tileSize + gameData2.tileSize / 2;
           particles.spawnCrateDebris(wx, wy);
@@ -778,7 +776,7 @@
       const myId = gameData2.myId;
       const me = myId ? newState.players[myId] : null;
       const rows = gameData2.map.length;
-      const cols = rows > 0 ? gameData2.map[0].length : 0;
+      const cols = rows > 0 ? gameData2.map.length : 0;
       const worldW = cols * gameData2.tileSize;
       const worldH = rows * gameData2.tileSize;
       if (me) {
@@ -830,16 +828,15 @@
           }
         }
       }
-      if (newState.explosions.length > prevExplosionsCount) {
-        const newestExp = newState.explosions[newState.explosions.length - 1];
-        if (newestExp) {
-          addScorchMarks(newestExp.tiles);
-          for (const t of newestExp.tiles) {
+      for (const exp of newState.explosions) {
+        if (exp.timer === 29) {
+          addScorchMarks(exp.tiles);
+          for (const t of exp.tiles) {
             const tx = t.c * gameData2.tileSize + gameData2.tileSize / 2;
             const ty = t.r * gameData2.tileSize + gameData2.tileSize / 2;
             particles.spawnExplosionSparks(tx, ty);
           }
-          const centerTile = newestExp.tiles[0];
+          const centerTile = exp.tiles[0];
           if (centerTile && me && worldW > 0) {
             const expX = centerTile.c * gameData2.tileSize + gameData2.tileSize / 2;
             const expY = centerTile.r * gameData2.tileSize + gameData2.tileSize / 2;
@@ -858,7 +855,6 @@
           }
         }
       }
-      prevExplosionsCount = newState.explosions.length;
       gameData2.serverState = newState;
       for (const id in newState.players) {
         const sp = newState.players[id];
@@ -1587,6 +1583,8 @@
   function renderPlayers(ctx2, gameData2, sprites2, drawWrapped) {
     const { myId, map, tileSize, renderPlayers: playersMap } = gameData2;
     const rows = map.length;
+    if (rows === 0)
+      return;
     const cols = map[0].length;
     const walkCycle = [1, 0, 2, 0];
     const me = myId ? playersMap[myId] : null;
@@ -1732,7 +1730,6 @@
           } else {
             rp.facing = dy > 0 ? "down" : "up";
           }
-          rp.walkTime += dt * 11;
         } else {
           rp.walkTime = 0;
         }

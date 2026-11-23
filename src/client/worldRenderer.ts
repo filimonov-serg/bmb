@@ -59,8 +59,8 @@ export function renderWorldBase(
         const leftCell = map[wrappedR][wrap(c - 1, cols)];
         const topLeftCell = map[wrap(r - 1, rows)][wrap(c - 1, cols)];
 
-        const topShadow = topCell === 1 ? 10 : topCell === 2 ? 7 : 0;
-        const leftShadow = leftCell === 1 ? 10 : leftCell === 2 ? 7 : 0;
+        const topShadow = topCell === 1 ? 10 : topCell === 2 || topCell === 4 ? 7 : 0;
+        const leftShadow = leftCell === 1 ? 10 : leftCell === 2 || leftCell === 4 ? 7 : 0;
 
         ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
 

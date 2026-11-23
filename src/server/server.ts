@@ -69,6 +69,7 @@ function startNextRound(): void {
     p.maxBombs = BASE_STATS.MAX_BOMBS;
     p.range = BASE_STATS.RANGE;
     p.canKick = false;
+    p.shieldTicks = 0;
     p.kills = 0;
     p.deaths = 0;
   }

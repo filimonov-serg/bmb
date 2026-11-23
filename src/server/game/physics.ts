@@ -156,7 +156,9 @@ export function canBombSlideTo(
   for (const id in players) {
     const p = players[id];
     if (!p.alive) continue;
-    if (Math.floor(p.x / TILE_SIZE) === c && Math.floor(p.y / TILE_SIZE) === r) {
+    const pc = wrap(Math.floor(p.x / TILE_SIZE), MAP_COLS);
+    const pr = wrap(Math.floor(p.y / TILE_SIZE), MAP_ROWS);
+    if (pc === c && pr === r) {
       return false;
     }
   }
@@ -174,8 +176,8 @@ function tryKickBomb(
 ): void {
   if (!player.canKick) return;
 
-  const col = Math.floor(player.x / TILE_SIZE);
-  const row = Math.floor(player.y / TILE_SIZE);
+  const col = wrap(Math.floor(player.x / TILE_SIZE), MAP_COLS);
+  const row = wrap(Math.floor(player.y / TILE_SIZE), MAP_ROWS);
   const targetC = wrap(col + dirX, MAP_COLS);
   const targetR = wrap(row + dirY, MAP_ROWS);
 

@@ -154,8 +154,8 @@ function isCellCompletelyFree(
   for (const id in players) {
     const p = players[id];
     if (!p.alive) continue;
-    const pc = Math.floor(p.x / TILE_SIZE);
-    const pr = Math.floor(p.y / TILE_SIZE);
+    const pc = wrap(Math.floor(p.x / TILE_SIZE), MAP_COLS);
+    const pr = wrap(Math.floor(p.y / TILE_SIZE), MAP_ROWS);
     if (pc === c && pr === r) return false;
   }
 

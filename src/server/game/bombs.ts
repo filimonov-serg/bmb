@@ -41,8 +41,8 @@ export function placeBomb(
 ): void {
   if (!player || !player.alive || player.activeBombs >= player.maxBombs) return;
 
-  const c = Math.floor(player.x / TILE_SIZE);
-  const r = Math.floor(player.y / TILE_SIZE);
+  const c = wrap(Math.floor(player.x / TILE_SIZE), MAP_COLS);
+  const r = wrap(Math.floor(player.y / TILE_SIZE), MAP_ROWS);
 
   if (bombs.some((b) => b.c === c && b.r === r)) return;
 
@@ -130,7 +130,8 @@ function detonateBomb(bomb: Bomb, state: ServerGameState, io: Server): void {
     }
   }
 
-  explosions.push({ tiles: affectedTiles, timer: 30, ownerId: bomb.ownerId });
+  const killerId = bomb.kickedBy || bomb.ownerId;
+  explosions.push({ tiles: affectedTiles, timer: 30, ownerId: killerId });
 }
 
 export function updateBombsAndExplosions(state: ServerGameState, io: Server): void {
@@ -162,9 +163,8 @@ export function updateBombsAndExplosions(state: ServerGameState, io: Server): vo
         b.y = b.r * TILE_SIZE + TILE_SIZE / 2;
         b.vx = 0;
         b.vy = 0;
-        b.kickedBy = null; // Сбрасываем толкающего после остановки
+        // b.kickedBy пока НЕ сбрасываем, вдруг она остановилась прямо в огне!
       } else {
-        // Путь свободен — обновляем пиксельные координаты и текущую клетку сетки
         b.x = nextX;
         b.y = nextY;
         b.c = wrap(Math.floor(b.x / TILE_SIZE), MAP_COLS);
@@ -177,6 +177,8 @@ export function updateBombsAndExplosions(state: ServerGameState, io: Server): vo
 
     if (b.timer <= 0 || inFire) {
       detonateBomb(b, state, io);
+    } else if (b.vx === 0 && b.vy === 0) {
+      b.kickedBy = null; // Бомба остановилась и не взорвалась — теперь сбрасываем толкающего
     }
   }
 
@@ -186,8 +188,8 @@ export function updateBombsAndExplosions(state: ServerGameState, io: Server): vo
       const p = players[id];
       if (!p.alive || p.shieldTicks > 0) continue; // Игрок под щитом неуязвим к взрывам!
 
-      const pc = Math.floor(p.x / TILE_SIZE);
-      const pr = Math.floor(p.y / TILE_SIZE);
+      const pc = wrap(Math.floor(p.x / TILE_SIZE), MAP_COLS);
+      const pr = wrap(Math.floor(p.y / TILE_SIZE), MAP_ROWS);
 
       if (exp.tiles.some((t) => t.c === pc && t.r === pr)) {
         p.alive = false;

@@ -34,7 +34,6 @@ export interface ClientGameData {
 }
 
 export function setupNetwork(socket: any, gameData: ClientGameData): void {
-  let prevExplosionsCount = 0;
   let prevStats: {
     maxBombs: number;
     range: number;
@@ -55,7 +54,6 @@ export function setupNetwork(socket: any, gameData: ClientGameData): void {
   socket.on("roundStart", ({ map, template }: { map: number[][]; template: MapTemplate }) => {
     gameData.map = map;
     gameData.template = template;
-    prevExplosionsCount = 0;
     particles.clear();
     clearScorchMarks();
     floatingText.clear();
@@ -67,8 +65,8 @@ export function setupNetwork(socket: any, gameData: ClientGameData): void {
       const oldVal = gameData.map[r][c];
       gameData.map[r][c] = val;
 
-      // Если в клетке был ящик (2) и она стала пустой (0) — пускаем щепки
-      if (oldVal === 2 && val === 0) {
+      // Если в клетке был ящик (2) или сундук (4) и она стала пустой (0) — пускаем щепки
+      if ((oldVal === 2 || oldVal === 4) && val === 0) {
         const wx = c * gameData.tileSize + gameData.tileSize / 2;
         const wy = r * gameData.tileSize + gameData.tileSize / 2;
         particles.spawnCrateDebris(wx, wy);
@@ -80,7 +78,7 @@ export function setupNetwork(socket: any, gameData: ClientGameData): void {
     const myId = gameData.myId;
     const me = myId ? newState.players[myId] : null;
     const rows = gameData.map.length;
-    const cols = rows > 0 ? gameData.map[0].length : 0;
+    const cols = rows > 0 ? gameData.map.length : 0;
     const worldW = cols * gameData.tileSize;
     const worldH = rows * gameData.tileSize;
 
@@ -139,19 +137,18 @@ export function setupNetwork(socket: any, gameData: ClientGameData): void {
       }
     }
 
-    // 3. Звук, искры, следы копоти и тряска камеры от нового взрыва
-    if (newState.explosions.length > prevExplosionsCount) {
-      const newestExp = newState.explosions[newState.explosions.length - 1];
-      if (newestExp) {
-        addScorchMarks(newestExp.tiles);
+    // 3. Звук, искры, следы копоти и тряска камеры от каждого нового взрыва (timer === 29)
+    for (const exp of newState.explosions) {
+      if (exp.timer === 29) {
+        addScorchMarks(exp.tiles);
 
-        for (const t of newestExp.tiles) {
+        for (const t of exp.tiles) {
           const tx = t.c * gameData.tileSize + gameData.tileSize / 2;
           const ty = t.r * gameData.tileSize + gameData.tileSize / 2;
           particles.spawnExplosionSparks(tx, ty);
         }
 
-        const centerTile = newestExp.tiles[0];
+        const centerTile = exp.tiles[0];
         if (centerTile && me && worldW > 0) {
           const expX = centerTile.c * gameData.tileSize + gameData.tileSize / 2;
           const expY = centerTile.r * gameData.tileSize + gameData.tileSize / 2;
@@ -173,7 +170,6 @@ export function setupNetwork(socket: any, gameData: ClientGameData): void {
         }
       }
     }
-    prevExplosionsCount = newState.explosions.length;
 
     gameData.serverState = newState;
 
